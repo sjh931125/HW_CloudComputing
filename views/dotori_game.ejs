@@ -1,0 +1,225 @@
+<html>
+  <head>
+	<style>
+	canvas {
+	    border: 1px solid #d3d3d3;
+	    background-color: #fdfdfd;
+	}
+	</style>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-3.2.0.min.js" ></script>
+  </head>
+  <body background="imgs/보노보노.jpg" onload="startGame()">
+    <% include ./body.ejs %>
+    <div id="myfilter" style="position:absolute;padding-top:10px;background-color:#000000;opacity:0.3;width:600px;height:400px;display:none"></div>
+    <form method="post" action="/dotori_game">
+    <div id="mytext" style="position:absolute;padding-top:120px;padding-left:220px;display:none;"></div>
+    <div id="mycommet" style="position:absolute;padding-top:150px;padding-left:220px;display:none;"><input type="text" class="comment" name="comment" id="comment" placeholder="한마디 남겨주세요"></div>
+    <input type="hidden" class="score" name="score" id="score" value="">
+    <div id="mysubmit" style="position:absolute;padding-top:180px;padding-left:220px;display:none;"><input type="submit" name="commit" value="입력"></div>
+    </form>
+    <h2>조작키 : 방향키</h2>
+
+    <script>
+    var myGamePiece;
+    var myObstacles = [];
+    var myScore;
+
+    var m_speed=3;
+    var m_left=0,m_right=0,m_up=0,m_down=0;
+    var myGameArea = {
+	    canvas : document.createElement("canvas"),
+	    start : function() {
+	        this.canvas.width = 600;
+	        this.canvas.height = 400;
+	        this.context = this.canvas.getContext("2d");
+	        document.body.insertBefore(this.canvas, document.body.childNodes[19]);
+	        this.frameNo = 0;
+	        this.respawn = 15;
+	        this.reduce_respawn_value=80;
+	        this.respawn_value=0;
+	        this.obstacle_speed=2;
+	        this.interval = setInterval(updateGameArea, 20);
+	    },
+	    clear : function() {
+	        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	    }
+	}
+
+	function startGame() {
+	    myGamePiece = new component(10,10,"blue",300,200);
+	    myScore = new component_text("20px", "Consolas", "black", 440, 20);
+	    myGameArea.start();
+	}
+
+	function component(width, height, color, x, y) {
+	    this.width = width;
+	    this.height = height;
+	    this.speedX = 0;
+    	this.speedY = 0;
+	    this.x = x;
+	    this.y = y;
+	    this.update = function(){
+	    	if(this.x>myGameArea.canvas.width-10) this.x=myGameArea.canvas.width-10;
+	    	if(this.x<0) this.x=0;
+	    	if(this.y>myGameArea.canvas.height-10) this.y=myGameArea.canvas.height-10;
+	    	if(this.y<0) this.y=0;
+	        ctx = myGameArea.context;
+	        ctx.fillStyle = color;
+	        ctx.fillRect(this.x, this.y, this.width, this.height);
+	    }
+	    this.newPos = function() {
+	        this.x += this.speedX;
+	        this.y += this.speedY; 
+	    }
+	    this.crashWith = function(otherobj) {
+	        var myleft = this.x;
+	        var myright = this.x + (this.width);
+	        var mytop = this.y;
+	        var mybottom = this.y + (this.height);
+	        var otherleft = otherobj.x;
+	        var otherright = otherobj.x + (otherobj.width);
+	        var othertop = otherobj.y;
+	        var otherbottom = otherobj.y + (otherobj.height);
+	        var crash = true;
+	        if ((mybottom < othertop) ||
+	               (mytop > otherbottom) ||
+	               (myright < otherleft) ||
+	               (myleft > otherright)) {
+	           crash = false;
+	        }
+	        return crash;
+	    }
+	}
+
+	function components(width, height, color, x, y,dist_x,dist_y) {
+	    this.width = width;
+	    this.height = height;
+	    this.x = x;
+	    this.y = y;
+	    this.dist_x=dist_x;
+	    this.dist_y=dist_y;
+	    this.update = function(){
+	        ctx = myGameArea.context;
+	        ctx.fillStyle = color;
+	        ctx.fillRect(this.x, this.y, this.width, this.height);
+	    }
+	    this.newPos = function() {
+	        this.x += this.dist_x;
+	        this.y += this.dist_y; 
+	    }
+	}
+
+	function component_text(width, height, color, x, y) {
+	    this.width = width;
+	    this.height = height;
+	    this.x = x;
+	    this.y = y;
+	    this.update = function(){
+	        ctx = myGameArea.context;
+	        ctx.font = this.width + " " + this.height;
+		    ctx.fillStyle = color;
+		    ctx.fillText(this.text, this.x, this.y);
+	    }
+	}
+
+
+	function updateGameArea() {
+		var x, y,dist_x,dist_y,tmp;
+		var respawn_location;
+	    for (i = 0; i < myObstacles.length; i += 1) {
+	        if (myGamePiece.crashWith(myObstacles[i])) {
+	        	document.getElementById("myfilter").style.display = "block";
+	        	document.getElementById("mytext").innerHTML="당신의 점수는 "+myGameArea.frameNo;
+	        	document.getElementById("mytext").style.display = "block";
+	        	document.getElementById("mycommet").style.display = "block";
+	        	document.getElementById("mysubmit").style.display = "block";
+	        	$(function(){
+				  $('.score').val(myGameArea.frameNo.toString());
+				});
+	            myGameArea.stop();
+	            return;
+	        } 
+	    }
+	    myGameArea.clear();
+	    myGameArea.frameNo += 1;
+	    myGameArea.respawn_value+=1;
+	    if(myGameArea.respawn_value>myGameArea.reduce_respawn_value){
+	    	myGameArea.respawn_value=0;
+	    	if(myGameArea.obstacle_speed<6) myGameArea.obstacle_speed+=0.1;
+	    	if(myGameArea.respawn>4) myGameArea.respawn-=1;
+	    }
+	    if (myGameArea.frameNo == 1 || myGameArea.frameNo % myGameArea.respawn == 0) {
+	    	respawn_location=Math.random()*4;
+	    	dist_x=Math.random()*myGameArea.obstacle_speed*myGameArea.obstacle_speed;
+	    	dist_y=myGameArea.obstacle_speed*myGameArea.obstacle_speed-dist_x;
+	    	dist_x=Math.sqrt(dist_x);
+	    	dist_y=Math.sqrt(dist_y);
+	    	if(respawn_location<1){
+	    		x=-10;
+	    		y=Math.random()*myGameArea.canvas.height;
+	    		tmp=Math.random()*2;
+	    		if(tmp<1) dist_y*=-1;
+	    	}
+	    	else if(respawn_location<2){
+	    		x=Math.random()*myGameArea.canvas.width;
+	    		y=myGameArea.canvas.height;
+	    		tmp=Math.random()*2;
+	    		if(tmp<1) dist_x*=-1;
+	    		dist_y*=-1;
+	    	}
+	    	else if(respawn_location<3){
+	    		x=myGameArea.canvas.width;
+	    		y=Math.random()*myGameArea.canvas.height;
+	    		tmp=Math.random()*2;
+	    		if(tmp<1) dist_y*=-1;
+	    		dist_x*=-1;
+	    	}
+	    	else if(respawn_location<4){
+	    		x=Math.random()*myGameArea.canvas.width;
+	    		y=-10;
+	    		tmp=Math.random()*2;
+	    		if(tmp<1) dist_x*=-1;
+	    	}
+	        myObstacles.push(new components(10, 10, "brown", x, y,dist_x,dist_y));
+	    }
+	    myScore.text="SCORE: " + myGameArea.frameNo;
+    	myScore.update();
+	    myGamePiece.newPos();
+	    myGamePiece.update();
+	    for (i = 0; i < myObstacles.length; i += 1) {
+	        myObstacles[i].newPos();
+	        myObstacles[i].update();
+	    }
+	}
+	window.onkeydown = function() {
+		if(event.keyCode==37){
+			myGamePiece.speedX = -1*m_speed;
+			m_left=1;
+		}
+		if(event.keyCode==39){
+			myGamePiece.speedX = m_speed;
+			m_right=1;
+		}
+		if(event.keyCode==38){
+			myGamePiece.speedY = -1*m_speed;
+			m_up=1;
+
+		}
+		if(event.keyCode==40){
+			myGamePiece.speedY = m_speed;
+			m_down=1;
+		}
+	}
+	window.onkeyup=function(){
+		if(event.keyCode==37) m_left=0;
+		if(event.keyCode==39) m_right=0;
+		if(event.keyCode==38) m_up=0;
+		if(event.keyCode==40) m_down=0;
+
+		if(m_left==0 && m_right==0) myGamePiece.speedX = 0;
+		if(m_up==0 && m_down==0) myGamePiece.speedY = 0;
+	}
+
+	</script>
+  </body>
+</html>

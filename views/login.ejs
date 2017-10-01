@@ -1,0 +1,12 @@
+<html>
+  <head>
+  </head>
+  <body background="imgs/보노보노.jpg">
+    <% include ./body.ejs %>
+    <h2>로그인</h2>
+    <form method="post" action="/login">
+      <input placeholder="이름을 입력해주세요" type="text" class="name" name="name" id="name"><br>
+      <input type="submit" name="commit" value="로그인">
+    </form>
+  </body>
+</html>

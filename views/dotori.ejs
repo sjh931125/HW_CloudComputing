@@ -1,0 +1,52 @@
+<html>
+  <head>
+  </head>
+  <body background="imgs/보노보노.jpg">
+    <% include ./body.ejs %>
+    <a href="/dotori_game"><button>게임하기</button></a>
+    <hr>
+    <h2>스코어 보드</h2>
+    <% if(posts){ %>
+		<table border=1>
+			<tr>
+				<th>등수</th>
+				<th>점수</th>
+				<th>이름</th>
+				<th>남긴말</th>
+			</tr>
+			<% for(i=0;i<posts.length;i++){ %>
+				<% if(i==0){ %>
+					<tr bgcolor="#FFFF00">
+				<% } else if(i==1) { %>
+					<tr bgcolor="#F4FA58">
+				<% } else if(i==2) { %>
+					<tr bgcolor="#F2F5A9">
+				<% } else { %>
+					<tr>
+				<% } %>
+				<td>
+					<% if(posts[i].name==session.name){ %><font color="red"><% } %>
+					<% if(i>0 && posts[i-1].score==posts[i].score){ %>
+					<% } else{ %>
+						<%=i+1%>
+					<% } %>
+					<% if(posts[i].name==session.name){ %></font><% } %>
+						
+				</td>
+				<td><% if(posts[i].name==session.name){ %><font color="red"><% } %><%=posts[i].score%><% if(posts[i].name==session.name){ %></font><% } %></td>
+				<td><% if(posts[i].name==session.name){ %><font color="red"><% } %><%=posts[i].name%><% if(posts[i].name==session.name){ %></font><% } %></td>
+				<td><% if(posts[i].name==session.name){ %><font color="red"><% } %><%=posts[i].comment%><% if(posts[i].name==session.name){ %></font><% } %></td>
+				</tr>
+			<% } %>
+		</table>
+		<% if(posts.name==session.name){ %>
+			<font color="red">
+		<% } %>
+
+		<% if(posts.name==session.name){ %>
+			</font>
+		<% } %>
+		<br>
+    <% } %>
+  </body>
+</html>

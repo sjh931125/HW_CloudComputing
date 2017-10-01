@@ -1,0 +1,10 @@
+<h1>보노보노 게임랜드</h1>
+<% if(session){ %>
+	<%=session.name%>님, 반갑습니다. <a href="/logout">로그아웃</a>
+<% } else{ %>
+	<a href="/login">로그인</a>
+<% } %>
+<a href="/">메인 화면으로</a>
+<hr>
+게임 목록 : <a href="/dotori">도토리 피하기</a> <a href="/rain">소나기 피하기</a>
+<hr>
